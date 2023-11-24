@@ -9,7 +9,7 @@ CORS(app)
 
 def init_tink_deterministic():
     daead.register()
-    # Charger le keyset depuis un fichier
+    # Load the keyset from a file
     with open('tink_keyset.json', 'r') as keyset_file:
         keyset_handle = cleartext_keyset_handle.read(tink.JsonKeysetReader(keyset_file.read()))
     return keyset_handle

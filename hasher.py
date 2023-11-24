@@ -9,34 +9,21 @@ import base64
 app = Flask(__name__)
 CORS(app)
 
-# Chemin du fichier CSV
+# Path to the CSV file
 csv_file_path = 'users.csv'
 
-# Fonction pour générer un sel aléatoire
+# Function to generate a random salt
 def generate_salt():
     return os.urandom(16)
 
-# Fonction pour hacher un mot de passe avec un sel
+# Function to hash a password with a salt
 def hash_password(password, salt):
     hasher = hashlib.sha256()
     password_with_salt = password.encode() + salt
     hasher.update(password_with_salt)
     return hasher.digest()
 
-# Fonction pour ajouter des données dans un fichier CSV
-def append_to_csv(username, salt, encrypted_password):
-    with open(csv_file_path, 'a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([username, base64.b64encode(salt).decode(), encrypted_password])
-
-# Fonction pour hacher un mot de passe avec un sel
-def hash_password(password, salt):
-    hasher = hashlib.sha256()
-    password_with_salt = password.encode() + salt
-    hasher.update(password_with_salt)
-    return hasher.digest()
-
-# Fonction pour ajouter des données dans un fichier CSV
+# Function to add data into a CSV file
 def append_to_csv(username, salt, encrypted_password):
     with open(csv_file_path, 'a', newline='') as file:
         writer = csv.writer(file)
@@ -48,25 +35,25 @@ def hash_password_endpoint():
     username = data['username']
     user_password = data['password']
     
-    # Générer un sel aléatoire
+    # Generate a random salt
     salt = generate_salt()
     
-    # Hacher le mot de passe avec le sel
+    # Hash the password with the salt
     hashed_password = hash_password(user_password, salt)
 
-    # Envoi du mot de passe haché pour chiffrement à un autre serveur
+    # Send the hashed password for encryption to another server
     encryption_server_url = 'http://127.0.0.1:6000/encrypt'
     response = requests.post(encryption_server_url, json={'hashed_password': base64.b64encode(hashed_password).decode()})
     if response.status_code == 200:
         result = response.json()
         encrypted_password = result['encrypted_password']
 
-        # Ajouter les données dans le fichier CSV
+        # Add the data to the CSV file
         append_to_csv(username, salt, encrypted_password)
 
-        return {'message': 'Utilisateur ajouté avec succès.'}
+        return {'message': 'User added successfully.'}
     else:
-        return {'error': 'Erreur lors du chiffrement du mot de passe.'}, 500
+        return {'error': 'Error during password encryption.'}, 500
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -76,16 +63,16 @@ def login():
 
     with open(csv_file_path, 'r') as file:
         reader = csv.reader(file)
-        next(reader)  # Saute l'en-tête
+        next(reader)  # Skip the header
         for row in reader:
             if row[0] == username:
                 stored_salt = base64.b64decode(row[1])
                 stored_encrypted_password = row[2]
 
-                # Hacher le mot de passe fourni avec le sel stocké
+                # Hash the provided password with the stored salt
                 hashed_password = hash_password(password, stored_salt)
                 
-                # Vérifier si le mot de passe correspond
+                # Verify if the password matches
                 encryption_server_url = 'http://127.0.0.1:6000/encrypt'
                 response = requests.post(encryption_server_url, json={'hashed_password': base64.b64encode(hashed_password).decode()})
                 
@@ -94,13 +81,13 @@ def login():
                     encrypted_password = result['encrypted_password']
 
                     if encrypted_password == stored_encrypted_password:
-                        return jsonify({'message': 'Connexion réussie.'})
+                        return jsonify({'message': 'Successful login.'})
                     else:
-                        return jsonify({'error': 'Mot de passe incorrect.'}), 401
+                        return jsonify({'error': 'Incorrect password.'}), 401
                 else:
-                    return jsonify({'error': 'Erreur lors du chiffrement du mot de passe.'}), 500
+                    return jsonify({'error': 'Error during password encryption.'}), 500
 
-        return jsonify({'error': 'Nom d\'utilisateur introuvable.'}), 404
+        return jsonify({'error': 'Username not found.'}), 404
 
 if __name__ == '__main__':
     app.run(port=5000)
