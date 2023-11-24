@@ -57,7 +57,6 @@ def hash_password_endpoint():
     # Envoi du mot de passe haché pour chiffrement à un autre serveur
     encryption_server_url = 'http://127.0.0.1:6000/encrypt'
     response = requests.post(encryption_server_url, json={'hashed_password': base64.b64encode(hashed_password).decode()})
-    print(response)
     if response.status_code == 200:
         result = response.json()
         encrypted_password = result['encrypted_password']
@@ -80,7 +79,6 @@ def login():
         next(reader)  # Saute l'en-tête
         for row in reader:
             if row[0] == username:
-                print(row[2])
                 stored_salt = base64.b64decode(row[1])
                 stored_encrypted_password = row[2]
 
@@ -90,7 +88,6 @@ def login():
                 # Vérifier si le mot de passe correspond
                 encryption_server_url = 'http://127.0.0.1:6000/encrypt'
                 response = requests.post(encryption_server_url, json={'hashed_password': base64.b64encode(hashed_password).decode()})
-                print(response.json())
                 
                 if response.status_code == 200:
                     result = response.json()

@@ -9,18 +9,9 @@ CORS(app)
 
 def init_tink_deterministic():
     daead.register()
-    keyset = r"""{
-        "key": [{
-            "keyData": {
-                "keyMaterialType": "SYMMETRIC",
-                "typeUrl": "type.googleapis.com/google.crypto.tink.AesSivKey",
-                "value": "EkAobOz+mL3XphMYHgMKitKTDANm69aQe0tgN82uYhT1tW07Q74fuyy7MoHN+WrZVvfTfCho5vC0Ai5d9nIa3exf"
-            },
-            "outputPrefixType": "TINK",
-            "status": "ENABLED"
-        }]
-    }"""
-    keyset_handle = cleartext_keyset_handle.read(tink.JsonKeysetReader(keyset))
+    # Charger le keyset depuis un fichier
+    with open('tink_keyset.json', 'r') as keyset_file:
+        keyset_handle = cleartext_keyset_handle.read(tink.JsonKeysetReader(keyset_file.read()))
     return keyset_handle
 
 KEYSET_HANDLE = init_tink_deterministic()
